@@ -7,11 +7,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() :
         BusesProperties()
                 .withInput("Input", juce::AudioChannelSet::stereo(), true)
                 .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-                )
-{
-    gainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(gainParamID.getParamID()));
-
-}
+                ),
+        params(apvts) {}
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
@@ -87,7 +84,22 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    params.prepareToPlay(sampleRate);
+    params.reset();
+
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = juce::uint32(samplesPerBlock);
+    spec.numChannels = 2;
+
+    delayLine.prepare(spec);
+
+    double numSamples = Parameters::maxDelayTime / 1000.0 * sampleRate;
+    int maxDelayInSamples = int(std::ceil(numSamples));
+    delayLine.setMaximumDelayInSamples(maxDelayInSamples);
+    delayLine.reset();
+
+    DBG(maxDelayInSamples);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -101,28 +113,35 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                              [[maybe_unused]] juce::MidiBuffer& midiMessages)
+void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
-    juce::ignoreUnused (midiMessages);
     juce::ScopedNoDenormals noDenormals;
-
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) { // basically for clearing garbage in unused channels
         buffer.clear (i, 0, buffer.getNumSamples());
     }
-
     // "MAIN" loop - gain
-    float gain_inDB = gainParam->get();
-    float gain = juce::Decibels::decibelsToGain(gain_inDB);
+    params.update();
 
-    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-        auto* channelData = buffer.getWritePointer(channel);
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            channelData[sample] *= gain;
-        }
+    delayLine.setDelay(48000.0f);
+
+    float* channelDataL = buffer.getWritePointer (0);
+    float* channelDataR = buffer.getWritePointer (1);
+
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+        params.smoothen();
+
+        float dryL = channelDataL[sample];
+        float dryR = channelDataR[sample];
+        delayLine.pushSample(0,dryL);
+        delayLine.pushSample(1,dryR);
+        float wetL = delayLine.popSample(0);
+        float wetR = delayLine.popSample(1);
+
+        channelDataL[sample] = (dryL + wetL) * params.gain;
+        channelDataR[sample] = (dryR + wetR) * params.gain;
     }
 }
 
@@ -156,16 +175,4 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new AudioPluginAudioProcessor();
-}
-
-juce::AudioProcessorValueTreeState::ParameterLayout
-    AudioPluginAudioProcessor::createParameterLayout()
-{
-    juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        gainParamID,
-        "Output Gain",
-        juce::NormalisableRange<float> { -12.0f, 12.0f },
-        0.0f));
-    return layout;
 }

@@ -1,5 +1,3 @@
-# Example Audio Plugin CMakeLists.txt
-
 # To get started on a new plugin, copy this entire folder (containing this file and C++ sources) to
 # a convenient location, and then start making modifications.
 
@@ -37,21 +35,21 @@ add_subdirectory("C:\\Users\\hgrov\\Documents\\JUCE" JUCE)                    # 
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
-juce_add_plugin(AudioPluginExample
-    # VERSION ...                               # Set this if the plugin version is different to the project version
-    # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
-    # ICON_SMALL ...
-    # COMPANY_NAME ...                          # Specify the name of the plugin's author
-    # IS_SYNTH TRUE/FALSE                       # Is this a synth or an effect?
-    # NEEDS_MIDI_INPUT TRUE/FALSE               # Does the plugin need midi input?
-    # NEEDS_MIDI_OUTPUT TRUE/FALSE              # Does the plugin need midi output?
-    # IS_MIDI_EFFECT TRUE/FALSE                 # Is this plugin a MIDI effect?
-    # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
-    COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
-    PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE Dem0                            # A unique four-character plugin id with exactly one upper-case character
-    FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "audioPlugin1-delay"         # The name of the final executable, which can differ from the target name
+juce_add_plugin(AudioPlugin1-delay
+        # VERSION ...                               # Set this if the plugin version is different to the project version
+        # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
+        # ICON_SMALL ...
+        # COMPANY_NAME ...                          # Specify the name of the plugin's author
+        # IS_SYNTH TRUE/FALSE                       # Is this a synth or an effect?
+        # NEEDS_MIDI_INPUT TRUE/FALSE               # Does the plugin need midi input?
+        # NEEDS_MIDI_OUTPUT TRUE/FALSE              # Does the plugin need midi output?
+        # IS_MIDI_EFFECT TRUE/FALSE                 # Is this plugin a MIDI effect?
+        # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
+        COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
+        PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
+        PLUGIN_CODE Dem0                            # A unique four-character plugin id with exactly one upper-case character
+        FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+        PRODUCT_NAME "AudioPlugin1-delay"         # The name of the final executable, which can differ from the target name
 )
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
@@ -60,17 +58,19 @@ juce_add_plugin(AudioPluginExample
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-# juce_generate_juce_header(AudioPluginExample)
+juce_generate_juce_header(AudioPlugin1-delay)
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
 # first argument, then a visibility parameter for the sources which should normally be PRIVATE.
 # Finally, we supply a list of source files that will be built into the target. This is a standard
 # CMake command.
 
-target_sources(AudioPluginExample
-    PRIVATE
+target_sources(AudioPlugin1-delay
+        PRIVATE
         PluginEditor.cpp
-        PluginProcessor.cpp)
+        PluginProcessor.cpp
+        Parameters.cpp
+)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -79,8 +79,8 @@ target_sources(AudioPluginExample
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
-target_compile_definitions(AudioPluginExample
-    PUBLIC
+target_compile_definitions(AudioPlugin1-delay
+        PUBLIC
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
@@ -101,11 +101,13 @@ target_compile_definitions(AudioPluginExample
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
 
-target_link_libraries(AudioPluginExample
-    PRIVATE
+target_link_libraries(AudioPlugin1-delay
+        PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
-    PUBLIC
+        juce::juce_core
+        juce::juce_dsp
+        PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags

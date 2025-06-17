@@ -1,8 +1,6 @@
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
-
-const juce::ParameterID gainParamID { "gain", 1 };
+#include "Parameters.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -46,11 +44,10 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState apvts {
-       *this, nullptr, "Parameters", createParameterLayout()
-    } ;
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-
-    juce::AudioParameterFloat* gainParam = nullptr;
-
+        *this, nullptr, "Parameters", Parameters::createParameterLayout()
+        };
+    Parameters params;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
+
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
 };
