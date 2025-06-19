@@ -99,7 +99,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     delayLine.setMaximumDelayInSamples(maxDelayInSamples);
     delayLine.reset();
 
-    DBG(maxDelayInSamples);
+    // DBG(maxDelayInSamples);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -122,10 +122,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) { // basically for clearing garbage in unused channels
         buffer.clear (i, 0, buffer.getNumSamples());
     }
-    // "MAIN" loop - gain
+
     params.update();
 
-    delayLine.setDelay(48000.0f);
+    float sampleRate = float (getSampleRate());
 
     float* channelDataL = buffer.getWritePointer (0);
     float* channelDataR = buffer.getWritePointer (1);
@@ -133,15 +133,23 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         params.smoothen();
 
+        float delayInSamples = params.delayTime / 1000.0f * sampleRate;
+        delayLine.setDelay(delayInSamples);
+
         float dryL = channelDataL[sample];
         float dryR = channelDataR[sample];
+
         delayLine.pushSample(0,dryL);
         delayLine.pushSample(1,dryR);
+
         float wetL = delayLine.popSample(0);
         float wetR = delayLine.popSample(1);
 
-        channelDataL[sample] = (dryL + wetL) * params.gain;
-        channelDataR[sample] = (dryR + wetR) * params.gain;
+        float mixL = dryL + wetL * params.mix;
+        float mixR = dryR + wetR * params.mix;
+
+        channelDataL[sample] = mixL * params.gain;
+        channelDataR[sample] = mixR * params.gain;
     }
 }
 
