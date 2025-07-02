@@ -98,8 +98,6 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     int maxDelayInSamples = int(std::ceil(numSamples));
     delayLine.setMaximumDelayInSamples(maxDelayInSamples);
     delayLine.reset();
-
-    // DBG(maxDelayInSamples);
 }
 
 void AudioPluginAudioProcessor::releaseResources()

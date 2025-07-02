@@ -12,7 +12,7 @@ const juce::ParameterID delayTimeParamID { "delay", 1};\
 const juce::ParameterID mixParamID { "mix", 1 };
 
 class Parameters {
-public:
+ public:
     Parameters(juce::AudioProcessorValueTreeState& apvts);
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -34,9 +34,11 @@ private:
     juce::LinearSmoothedValue<float> gainSmoother;
     juce::AudioParameterFloat* delayTimeParam;
     float targetDelayTime = 0.0f;
-    float coeff = 0.0f;
+    float coeff = 0.0f; // one-pole smoothing
     juce::AudioParameterFloat* mixParam;
     juce::LinearSmoothedValue<float> mixSmoother;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Parameters)
 };
 
 #endif //PARAMETERS_H

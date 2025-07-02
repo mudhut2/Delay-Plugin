@@ -70,6 +70,8 @@ target_sources(AudioPlugin1-delay
         PluginEditor.cpp
         PluginProcessor.cpp
         Parameters.cpp
+        RotaryKnob.cpp
+        LookAndFeel.cpp
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
