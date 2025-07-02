@@ -34,7 +34,6 @@ void RotaryKnobLookAndFeel::drawRotarySlider(
         );
     g.setGradientFill(gradient);
     g.fillEllipse(knobRect);
-
 // draw arc around outside of knob
     auto center = bounds.getCentre();
     auto radius = bounds.getWidth() / 2.0f;
@@ -50,5 +49,19 @@ void RotaryKnobLookAndFeel::drawRotarySlider(
         lineWidth, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
     g.setColour(Colors::Knob::trackBackground);
     g.strokePath(backgroundArc, strokeType);
+// draw knob dial to parameter current val based on theta
+    auto dialRadius = innerRect.getHeight() / 2.0f;
+    auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+    juce::Point<float> dialStart(center.x, center.y);
+    juce::Point<float> dialEnd(center.x + dialRadius * std::sin(toAngle),
+                                center.y - dialRadius * std::cos(toAngle));
+
+    juce::Path dialPath;
+    dialPath.startNewSubPath(dialStart);
+    dialPath.lineTo(dialEnd);
+    g.setColour(Colors::Knob::dial);
+    g.strokePath(dialPath, strokeType);
+
 
 }

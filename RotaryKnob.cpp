@@ -7,7 +7,8 @@
 
 
 RotaryKnob::RotaryKnob(const juce::String& text, juce::AudioProcessorValueTreeState& apvts, const juce::ParameterID& parameterID)
-    : attachment(apvts, parameterID.getParamID(), slider) {
+    : attachment(apvts, parameterID.getParamID(), slider)
+{
     slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70,16);
     slider.setBounds(0,0,70,86);
@@ -21,6 +22,9 @@ RotaryKnob::RotaryKnob(const juce::String& text, juce::AudioProcessorValueTreeSt
 
     setSize(70,110);
     setLookAndFeel(RotaryKnobLookAndFeel::get());
+    float pi = juce::MathConstants<float>::pi;
+    slider.setRotaryParameters(1.25f * pi, 2.75 * pi, true);
+
 }
 RotaryKnob::~RotaryKnob() {
 
