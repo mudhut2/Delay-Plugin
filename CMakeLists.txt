@@ -95,7 +95,14 @@ target_compile_definitions(AudioPlugin1-delay
 # static library. These source files can be of any kind (wav data, images, fonts, icons etc.).
 # Conversion to binary-data will happen when your target is built.
 
-# juce_add_binary_data(AudioPluginData SOURCES ...)
+file(GLOB plugin_assets
+    "assets/Lato-Medium.ttf"
+    "assets/Logo.png"
+    "assets/synthTex.png")
+
+juce_add_binary_data(AudioPlugin1-delay_data
+        SOURCES
+            ${plugin_assets})
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module
@@ -105,7 +112,7 @@ target_compile_definitions(AudioPlugin1-delay
 
 target_link_libraries(AudioPlugin1-delay
         PRIVATE
-        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
+        AudioPlugin1-delay_data  # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
         juce::juce_core
         juce::juce_dsp

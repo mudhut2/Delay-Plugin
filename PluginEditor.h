@@ -22,11 +22,12 @@ private:
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
-
-    RotaryKnob gainKnob { "Gain", processorRef.apvts, gainParamID };
+    RotaryKnob gainKnob { "Gain", processorRef.apvts, gainParamID, true };
     RotaryKnob mixKnob { "Mix", processorRef.apvts, mixParamID};
     RotaryKnob delayTimeKnob { "Time", processorRef.apvts, delayTimeParamID};
 
     juce::GroupComponent delayGroup, feedbackGroup, outputGroup;
+
+    MainLookAndFeel mainLF;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
