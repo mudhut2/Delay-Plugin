@@ -27,7 +27,7 @@ class Parameters {
     float mix = 1.0f;
 
     static constexpr float minDelayTime = 5.0f;
-    static constexpr float maxDelayTime = 5000.0f;
+    static constexpr float maxDelayTime = 10000.0f;
 
 private:
     juce::AudioParameterFloat* gainParam;

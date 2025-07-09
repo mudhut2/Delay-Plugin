@@ -1,11 +1,9 @@
 //
 // Created by hgrov on 6/27/2025.
 //
-
 #ifndef ROTARYKNOB_H
 #define ROTARYKNOB_H
 #include <JuceHeader.h>
-
 
 class RotaryKnob : public juce::Component{
 public:
