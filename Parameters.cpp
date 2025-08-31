@@ -1,30 +1,28 @@
-//
-// Created by hgrov on 6/13/2025.
-//
 #include "Parameters.h"
 
-template<typename T> static void castParameter(juce::AudioProcessorValueTreeState& apvts, const juce::ParameterID& id, T& destination)
+template<typename T>
+static void castParameter(juce::AudioProcessorValueTreeState& apvts,
+                          const juce::ParameterID& id, T& destination)
 {
     destination = dynamic_cast<T>(apvts.getParameter(id.getParamID()));
-    jassert(destination); // parameter does not exist or wrong type
+    jassert(destination);  // parameter does not exist or wrong type
 }
 
-static juce::String stringFromMilliseconds(float value, int) {
+static juce::String stringFromMilliseconds(float value, int)
+{
     if (value < 10.0f) {
-        return juce::String(value,2) + " ms";
-    }
-    else if (value < 100.0f) {
+        return juce::String(value, 2) + " ms";
+    } else if (value < 100.0f) {
         return juce::String(value, 1) + " ms";
-    }
-    else if (value < 1000.0f) {
-        return juce::String(int(value)) + " min";
-    }
-    else {
-        return juce::String(value * 0.0001f, 2) + " s";
+    } else if (value < 1000.0f) {
+        return juce::String(int(value)) + " ms";
+    } else {
+        return juce::String(value * 0.001f, 2) + " s";
     }
 }
 
-static float millisecondsFromString(const juce::String& text) {
+static float millisecondsFromString(const juce::String& text)
+{
     float value = text.getFloatValue();
     if (!text.endsWithIgnoreCase("ms")) {
         if (text.endsWithIgnoreCase("s") || value < Parameters::minDelayTime) {
@@ -34,18 +32,22 @@ static float millisecondsFromString(const juce::String& text) {
     return value;
 }
 
-static juce::String stringFromDecibels(float value, int) {
-    return juce::String(value,1) + " db";
+static juce::String stringFromDecibels(float value, int)
+{
+    return juce::String(value, 1) + " dB";
 }
 
-static juce::String stringFromPercent(float value, int) {
+static juce::String stringFromPercent(float value, int)
+{
     return juce::String(int(value)) + " %";
 }
 
-Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts) {
+Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
+{
     castParameter(apvts, gainParamID, gainParam);
     castParameter(apvts, delayTimeParamID, delayTimeParam);
     castParameter(apvts, mixParamID, mixParam);
+    castParameter(apvts, feedbackParamID, feedbackParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
@@ -66,8 +68,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
         juce::NormalisableRange<float> { minDelayTime, maxDelayTime, 0.001f, 0.25f },
         100.0f,
         juce::AudioParameterFloatAttributes()
-                    .withStringFromValueFunction(stringFromMilliseconds)
-                    .withValueFromStringFunction(millisecondsFromString)
+            .withStringFromValueFunction(stringFromMilliseconds)
+            .withValueFromStringFunction(millisecondsFromString)
     ));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -77,19 +79,31 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
         100.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
     ));
+
+    layout.add(std::make_unique<AudioParameterFloat>(
+        feedbackParamID,
+        "Feedback",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f),
+        0.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
+            ));
+
     return layout;
 }
 
-void Parameters::prepareToPlay(double sampleRate) noexcept {
-    double duration = 0.02f;
+void Parameters::prepareToPlay(double sampleRate) noexcept
+{
+    double duration = 0.02;
     gainSmoother.reset(sampleRate, duration);
 
     coeff = 1.0f - std::exp(-1.0f / (0.2f * float(sampleRate)));
 
-    mixSmoother.reset(sampleRate, duration); // reset back to set value so its at the right value at initialization and not random
+    mixSmoother.reset(sampleRate, duration);
+    feedbackSmoother.reset(sampleRate, duration);
 }
 
-void Parameters::reset() noexcept {
+void Parameters::reset() noexcept
+{
     gain = 0.0f;
     gainSmoother.setCurrentAndTargetValue(juce::Decibels::decibelsToGain(gainParam->get()));
 
@@ -97,6 +111,9 @@ void Parameters::reset() noexcept {
 
     mix = 1.0f;
     mixSmoother.setCurrentAndTargetValue(mixParam->get() * 0.01f);
+
+    feedback = 0.0f;
+    feedbackSmoother.setCurrentAndTargetValue(feedbackParam->get() * 0.01f);
 }
 
 void Parameters::update() noexcept
@@ -118,4 +135,7 @@ void Parameters::smoothen() noexcept
     delayTime += (targetDelayTime - delayTime) * coeff;
 
     mix = mixSmoother.getNextValue();
+
+    feedback = feedbackSmoother.getNextValue();
 }
+
